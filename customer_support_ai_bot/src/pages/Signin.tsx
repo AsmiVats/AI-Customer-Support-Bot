@@ -1,9 +1,9 @@
-"use client"
 
+import { login } from "@/api/User"
 import React from "react"
 import { useNavigate } from 'react-router-dom'
 
-export function SignIn({ onAuthSuccess }: { onAuthSuccess?: (token?: string) => void }) {
+export function SignIn() {
   const navigate = useNavigate()
   console.log('[SignIn] mounted')
   const [email, setEmail] = React.useState("")
@@ -26,27 +26,20 @@ export function SignIn({ onAuthSuccess }: { onAuthSuccess?: (token?: string) => 
     setLoading(true)
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      })
-
-      const data = await res.json().catch(() => ({}))
+      const res = await login({ email, password });
+      console.log('Login response:', res);
       if (!res.ok) {
-        setError(data.error || data.message || 'Invalid credentials. Please try again.')
+        setError(res.data?.error || res.data?.message || 'Invalid credentials. Please try again.')
         return
       }
-
-      const token = data.token
+      const token = res.data?.token
       if (!token) {
         setError('Login succeeded but token was not returned by server.')
         return
       }
 
       setSuccess('Signed in successfully.')
-      console.log('[SignIn] success - calling onAuthSuccess with token=', token)
-      onAuthSuccess?.(token)
+       localStorage.setItem("token", token);
       navigate('/')
     } catch (err: any) {
       console.error('SignIn error', err)

@@ -1,14 +1,19 @@
 
-import React from "react"
+import { signup } from "@/api/User"
 import { useNavigate } from 'react-router-dom'
-export function SignUp({ onAuthSuccess }: { onAuthSuccess?: (token?: string) => void }) {
+import  { useState } from "react"
+
+export function SignUp() {
+  
   const navigate = useNavigate()
   console.log('[SignUp] mounted')
-  const [email, setEmail] = React.useState("")
-  const [password, setPassword] = React.useState("")
-  const [loading, setLoading] = React.useState(false)
-  const [error, setError] = React.useState<string | null>(null)
-  const [success, setSuccess] = React.useState<string | null>(null)
+  
+  const [email, setEmail] = useState("")
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -16,20 +21,16 @@ export function SignUp({ onAuthSuccess }: { onAuthSuccess?: (token?: string) => 
     setSuccess(null)
     console.log('[SignUp] onSubmit email=', email)
 
-    if (!email || !password) {
-      setError("Please enter both email and password.")
+    if (!username || !email || !password) {
+      setError("Please enter all details.")
       return
     }
     setLoading(true)
 
     try {
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: email.split('@')[0] || email, email, password })
-      })
-
-      const data = await res.json().catch(() => ({}))
+     const res = await signup({ username, email, password });
+      console.log('Signup response:', res);
+      const data = res.data || {}
       if (!res.ok) {
         setError(data.error || data.message || 'Unable to create account')
         return
@@ -39,7 +40,7 @@ export function SignUp({ onAuthSuccess }: { onAuthSuccess?: (token?: string) => 
       setSuccess('Account created successfully.')
       if (token) {
         console.log('[SignUp] success - calling onAuthSuccess with token=', token)
-        onAuthSuccess?.(token)
+        localStorage.setItem('token',token);
       }
       console.log('[SignUp] navigate to /')
       navigate('/')
@@ -60,7 +61,7 @@ export function SignUp({ onAuthSuccess }: { onAuthSuccess?: (token?: string) => 
           <h1 id="signup-title" className="text-2xl font-semibold text-pretty">
             Create an account
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">Use your email and password to create an account.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Create an account.</p>
         </header>
 
         <form onSubmit={onSubmit} className="px-6 py-6 space-y-4">
@@ -77,6 +78,23 @@ export function SignUp({ onAuthSuccess }: { onAuthSuccess?: (token?: string) => 
               onChange={(e) => setEmail(e.target.value)}
               className="block w-full rounded-md border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
               placeholder="you@example.com"
+              aria-required="true"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="username" className="text-sm font-medium">
+              Username
+            </label>
+            <input
+              id="username"
+              type="text"
+              autoComplete="username"
+              required
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="block w-full rounded-md border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
+              placeholder="Enter your username"
               aria-required="true"
             />
           </div>
