@@ -26,18 +26,31 @@ export function SignIn({ onAuthSuccess }: { onAuthSuccess?: (token?: string) => 
     setLoading(true)
 
     try {
-      // Replace this simulation with a real API call to your sign-in endpoint
-      await new Promise((r) => setTimeout(r, 600))
-      // await fetch("/api/auth/signin", { method: "POST", body: JSON.stringify({ email, password }) })
-      setSuccess("Signed in successfully.")
-      // call parent auth handler and navigate to app
-  const token = 'dummy-token'
-  console.log('[SignIn] success - calling onAuthSuccess with token=', token)
-  onAuthSuccess?.(token)
-  console.log('[SignIn] navigate to /')
-  navigate('/')
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      })
+
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(data.error || data.message || 'Invalid credentials. Please try again.')
+        return
+      }
+
+      const token = data.token
+      if (!token) {
+        setError('Login succeeded but token was not returned by server.')
+        return
+      }
+
+      setSuccess('Signed in successfully.')
+      console.log('[SignIn] success - calling onAuthSuccess with token=', token)
+      onAuthSuccess?.(token)
+      navigate('/')
     } catch (err: any) {
-      setError("Invalid credentials. Please try again.")
+      console.error('SignIn error', err)
+      setError('Invalid credentials. Please try again.')
     } finally {
       setLoading(false)
     }

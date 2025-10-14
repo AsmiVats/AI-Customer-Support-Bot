@@ -23,16 +23,26 @@ export function SignUp({ onAuthSuccess }: { onAuthSuccess?: (token?: string) => 
     setLoading(true)
 
     try {
-      // Replace this simulation with a real API call to your sign-up endpoint
-      await new Promise((r) => setTimeout(r, 600))
-      // await fetch("/api/auth/signup", { method: "POST", body: JSON.stringify({ email, password }) })
-      setSuccess("Account created successfully. You can now sign in.")
-      // optionally auto-login: call parent handler and navigate
-  const token = 'dummy-token'
-  console.log('[SignUp] success - calling onAuthSuccess with token=', token)
-  onAuthSuccess?.(token)
-  console.log('[SignUp] navigate to /')
-  navigate('/')
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: email.split('@')[0] || email, email, password })
+      })
+
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(data.error || data.message || 'Unable to create account')
+        return
+      }
+
+      const token = data.token
+      setSuccess('Account created successfully.')
+      if (token) {
+        console.log('[SignUp] success - calling onAuthSuccess with token=', token)
+        onAuthSuccess?.(token)
+      }
+      console.log('[SignUp] navigate to /')
+      navigate('/')
     } catch (err: any) {
       setError("Something went wrong. Please try again.")
     } finally {
