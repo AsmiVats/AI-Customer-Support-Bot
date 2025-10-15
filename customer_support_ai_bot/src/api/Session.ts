@@ -12,12 +12,12 @@ const api = axios.create({
 });
 
 export const createSession = async (userId?: string) => {
-  const response = await api.post("/new", userId ? { userId } : {});
+  const response = await api.post("/session/new", userId ? { userId } : {});
   return response.data; // { sessionId }
 };
 
 export const sendMessage = async (sessionId: string, message: string) => {
-  const response = await api.post("/chat", { sessionId, message });
+  const response = await api.post("/session/chat", { sessionId, message });
   return response.data;
 };
 
@@ -27,13 +27,13 @@ export const getSession = async (sessionId: string) => {
 };
 
 export const endSession = async (sessionId: string) => {
-  const response = await api.post(`/session/${sessionId}/end`);
+  const response = await api.post(`/${sessionId}/end`);
   return response.data;
 };
 
-export const summarize = async (sessionId: string) => {
-  const response = await api.post(`/session/${sessionId}/summarize`);
-  return response.data;
-};
+// export const summarize = async (sessionId: string) => {
+//   const response = await api.post(`/session/${sessionId}/summarize`);
+//   return response.data;
+// };
 
-export default { createSession, sendMessage, getSession, endSession, summarize };
+export default { createSession, sendMessage, getSession, endSession };

@@ -19,7 +19,7 @@ export const botFunction = async (prompt: string, context: Array<{sender: string
             body: JSON.stringify({
                 contents: [{  
                     parts: [{
-                        text: prompt
+                        text: prompt + context
                     }]
                 }]
             })

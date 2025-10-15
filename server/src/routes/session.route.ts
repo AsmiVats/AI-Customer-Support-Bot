@@ -38,6 +38,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         const prompt = `You are a customer support assistant. Use the conversation context to answer the user's question and provide 3 possible next questions. If you cannot answer, say so and recommend escalation.`;
 
         // call LLM
+        console.log("prompt:",prompt, "context:",context);
         const botReply = await botFunction(prompt + '\n\nUser: ' + message, context);
         console.log('Bot reply:', botReply);
         const replyText = botReply.text || 'Sorry, I could not produce a response.';
@@ -56,7 +57,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     }
 });
 
-router.get('/session/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
     try{
         const sessionId = req.params.id;
         const conv = await getConversation(sessionId);

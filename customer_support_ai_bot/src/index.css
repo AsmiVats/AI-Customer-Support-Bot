@@ -4,91 +4,92 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  /* pastel lavender primary and mint complementary accent; define missing muted tokens; improve contrast */
-  --primary: oklch(0.92 0.05 290);
-  --primary-foreground: oklch(0.145 0 0);
+  /* Light theme - purple / violet palette */
+  --background: #F5F3FF; /* lavender-50 */
+  --foreground: #2E0255; /* deep purple */
+  --card: #FFFFFF;
+  --card-foreground: #2E0255;
+  --popover: #FFFFFF;
+  --popover-foreground: #2E0255;
 
-  --secondary: oklch(0.975 0.02 290);
-  --secondary-foreground: oklch(0.205 0 0);
+  --primary: #7C3AED; /* violet-600 */
+  --primary-foreground: #FFFFFF;
 
-  --accent: oklch(0.95 0.05 170); /* mint accent complements lavender */
-  --accent-foreground: oklch(0.205 0 0);
+  --secondary: #6D28D9; /* violet-700 */
+  --secondary-foreground: #FFFFFF;
 
-  --muted: oklch(0.965 0.01 290); /* soft neutral with slight lavender tint */
-  --muted-foreground: oklch(0.35 0.02 290);
+  --accent: #C084FC; /* lighter violet */
+  --accent-foreground: #2E0255;
 
-  --destructive: oklch(0.78 0.12 40); /* stronger peach within same complement family */
-  --destructive-foreground: oklch(0.985 0 0);
+  --muted: #EDE9FE; /* very light lavender */
+  --muted-foreground: #6B21A8;
 
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.78 0.09 290);
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
 
-  /* charts aligned to lavender/mint family (optional but consistent) */
-  --chart-1: oklch(0.92 0.05 290);
-  --chart-2: oklch(0.88 0.05 300);
-  --chart-3: oklch(0.84 0.05 280);
-  --chart-4: oklch(0.95 0.05 170); /* mint */
-  --chart-5: oklch(0.9 0.04 160);
+  --border: #E9D8FF;
+  --input: #FFFFFF;
+  --ring: #7C3AED;
+
+  /* charts */
+  --chart-1: #7C3AED;
+  --chart-2: #6D28D9;
+  --chart-3: #5B21B6;
+  --chart-4: #C084FC;
+  --chart-5: #A78BFA;
 
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.92 0.05 290); /* Sidebar primary aligns with brand lavender */
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #FCF8FF;
+  --sidebar-foreground: #2E0255;
+  --sidebar-primary: #7C3AED;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #C084FC;
+  --sidebar-accent-foreground: #2E0255;
+  --sidebar-border: #E9D8FF;
+  --sidebar-ring: #7C3AED;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  /* pastel lavender primary and mint complementary accent for dark mode + missing tokens */
-  --primary: oklch(0.78 0.12 290);
-  --primary-foreground: oklch(0.985 0 0);
+  --background: #0B0226; /* very dark purple */
+  --foreground: #EDE9FE; /* light lavender */
+  --card: #12042D;
+  --card-foreground: #EDE9FE;
+  --popover: #12042D;
+  --popover-foreground: #EDE9FE;
 
-  --secondary: oklch(0.23 0.03 290);
-  --secondary-foreground: oklch(0.985 0 0);
+  --primary: #7C3AED;
+  --primary-foreground: #FFFFFF;
 
-  --accent: oklch(0.62 0.12 170);
-  --accent-foreground: oklch(0.985 0 0);
+  --secondary: #6D28D9;
+  --secondary-foreground: #FFFFFF;
 
-  --muted: oklch(0.22 0.02 290);
-  --muted-foreground: oklch(0.8 0.02 290);
+  --accent: #8B5CF6;
+  --accent-foreground: #FFFFFF;
 
-  --destructive: oklch(0.6 0.14 40);
-  --destructive-foreground: oklch(0.985 0 0);
+  --muted: #1E0833;
+  --muted-foreground: #C4B5FD;
 
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.7 0.1 290);
+  --destructive: #FCA5A5;
+  --destructive-foreground: #1F1137;
 
-  --chart-1: oklch(0.78 0.12 290);
-  --chart-2: oklch(0.72 0.1 300);
-  --chart-3: oklch(0.66 0.08 280);
-  --chart-4: oklch(0.62 0.12 170); /* mint */
-  --chart-5: oklch(0.58 0.1 160);
+  --border: #2A133A;
+  --input: #1B062F;
+  --ring: #7C3AED;
 
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.78 0.12 290);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.62 0.12 170);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  --chart-1: #7C3AED;
+  --chart-2: #6D28D9;
+  --chart-3: #5B21B6;
+  --chart-4: #8B5CF6;
+  --chart-5: #A78BFA;
+
+  --sidebar: #0E0620;
+  --sidebar-foreground: #EDE9FE;
+  --sidebar-primary: #7C3AED;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #8B5CF6;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #2A133A;
+  --sidebar-ring: #7C3AED;
 }
 
 @theme inline {
