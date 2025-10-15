@@ -28,11 +28,11 @@ export function SignIn() {
     try {
       const res = await login({ email, password });
       console.log('Login response:', res);
-      if (!res.ok) {
-        setError(res.data?.error || res.data?.message || 'Invalid credentials. Please try again.')
+      if (!res.success) {
+        setError('Invalid credentials. Please try again.')
         return
       }
-      const token = res.data?.token
+      const token = res.token
       if (!token) {
         setError('Login succeeded but token was not returned by server.')
         return
@@ -75,7 +75,7 @@ export function SignIn() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="block w-full rounded-md border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
-              placeholder="you@example.com"
+              placeholder="name@example.com"
               aria-required="true"
             />
           </div>

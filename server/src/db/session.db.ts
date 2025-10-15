@@ -13,14 +13,14 @@ const ConversationSchema: any = new mongoose.Schema({
 
 export const Conversation = mongoose.model('Conversation', ConversationSchema);
 
-// Helper: create a new conversation for a user
+//create a new conversation/session
 export const createConversation = async (userId: string) => {
     const conv = new Conversation({ userId, messages: [] });
     await conv.save();
     return conv;
 };
 
-// Helper: append message to conversation
+//add a message to an existing conversation/session
 export const appendMessage = async (conversationId: string, sender: 'user' | 'bot', text: string) => {
     const conv = await Conversation.findById(conversationId);
     if(!conv) throw new Error('Conversation not found');
@@ -29,16 +29,23 @@ export const appendMessage = async (conversationId: string, sender: 'user' | 'bo
     return conv;
 };
 
+//get conversation by id
 export const getConversation = async (conversationId: string) => {
     const conv = await Conversation.findById(conversationId).lean();
     return conv;
 };
 
+//end a conversation/session
 export const endConversation = async (conversationId: string) => {
-    // Marking end can be done by deleting or tagging; we'll tag by adding a meta message
     const conv = await Conversation.findById(conversationId);
     if(!conv) throw new Error('Conversation not found');
     conv.messages.push({ sender: 'bot', text: '[Conversation ended]', timestamp: new Date() } as any);
     await conv.save();
     return conv;
+};
+
+// list conversations for a given user
+export const listConversations = async (userId: string) => {
+    const convs = await Conversation.find({ userId, 'messages.0': { $exists: true } }).sort({ updatedAt: -1 }).lean();
+    return convs;
 };

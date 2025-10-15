@@ -5,20 +5,24 @@ import { cn } from "@/lib/utils"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { sendMessage, createSession, getSession, endSession } from "@/api/Session"
+import { sendMessage, createSession, getSession, endSession, listSessions } from "@/api/Session"
 import PrevSessionModal from '@/pages/PrevSession'
+import { extractUserId } from "@/lib/token"
 
 
-type Role = "user" | "assistant"
-type ChatMessage = { id: string; role: Role; text: string }
+type ChatMessage = {
+  id: string;
+  sender: 'user' | 'bot';
+  text: string;
+};
 
 type BubbleProps = {
-  role: "user" | "assistant"
+  sender: 'user' | 'bot';
   text: string
 }
 
-function MessageBubble({ role, text }: BubbleProps) {
-  const isUser = role === "user"
+function MessageBubble({ sender, text }: BubbleProps) {
+  const isUser = sender === "user"
   const base = "px-4 py-2 rounded-lg leading-relaxed text-pretty shadow-sm max-w-[80%]"
   const userStyles = "bg-primary text-primary-foreground rounded-br-sm ml-auto"
   const assistantStyles = "bg-secondary text-secondary-foreground rounded-bl-sm"
@@ -32,8 +36,10 @@ function MessageBubble({ role, text }: BubbleProps) {
   )
 }
 
+
 export default function SupportChat() {
   const [input, setInput] = useState("")
+  const [pastSessions, setPastSessions] = useState<Array<{id: string; title?: string; server?: boolean; messages?: ChatMessage[]  }>>([])
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [sessions, setSessions] = useState<Array<{ id: string; title?: string; server?: boolean; messages?: ChatMessage[] }>>([])
   const [activeSession, setActiveSession] = useState<string | null>(null)
@@ -49,19 +55,52 @@ export default function SupportChat() {
   // load sessions from localStorage on mount, then create a new session for this page load
   useEffect(() => {
     (async () => {
+      // load local sessions into a local variable (avoid stale closure)
+      let initialSessions: Array<any> = []
       try {
         const raw = localStorage.getItem('cs_sessions')
         if (raw) {
-          setSessions(JSON.parse(raw))
+          initialSessions = JSON.parse(raw)
         }
       } catch (e) {
         // ignore
       }
 
-      // create a new session for this page load and clear messages
-      try { await createNewSession(true) } catch (e) { /* ignore */ }
+
+      // always attempt to fetch server sessions when we have a token
+      try {
+        // const token = localStorage.getItem('token')
+        const userId = extractUserId();
+        if (userId) {
+          const res = await listSessions(userId)
+          if(res?.conversations) {  
+            setPastSessions(res.conversations);
+          }else{
+            setPastSessions([]); 
+          }
+        }else{
+          setPastSessions([]); 
+        }
+      } catch (err) {
+        // ignore server list failures and keep local sessions only
+        console.log("Error listing sessions", err)
+      }
+
+      // set sessions from initialSessions and persist
+      setSessions(initialSessions)
+      try { localStorage.setItem('cs_sessions', JSON.stringify(initialSessions)) } catch (e) { /* ignore */ }
+
+      // if no sessions exist, create a new one for this page load and clear messages
+      if (!initialSessions || initialSessions.length === 0) {
+        try { await createNewSession(true) } catch (e) { /* ignore */ }
+      }
     })()
   }, [])
+
+  // persist sessions whenever they change so they survive refreshes
+  useEffect(() => {
+    try { localStorage.setItem('cs_sessions', JSON.stringify(sessions)) } catch (e) { /* ignore */ }
+  }, [sessions])
 
   const send = async (text: string) => {
     setLoading(true)
@@ -76,7 +115,7 @@ export default function SupportChat() {
       }
 
       // now add the user's message (after any potential session creation)
-      const newUser: ChatMessage = { id: crypto.randomUUID(), role: "user", text }
+      const newUser: ChatMessage = { id: crypto.randomUUID(), sender: "user", text }
       setMessages((m) => [...m, newUser])
 
       // determine if session is server-backed: prefer newly-created metadata when available
@@ -86,18 +125,20 @@ export default function SupportChat() {
         const res = await sendMessage(sessionIdToUse, text)
         console.log(res);
         if (res?.reply) {
-          setMessages((m) => [...m, { id: crypto.randomUUID(), role: 'assistant', text: res.reply }])
+          setMessages((m) => [...m, { id: crypto.randomUUID(), sender: 'bot', text: res.reply }])
         }
       } else {
         // local-only session: persist the user message into session metadata
-        const next = sessions.map((s) => s.id === sessionIdToUse ? { ...s, messages: [...(s.messages || []), newUser] } : s)
-        setSessions(next)
-        try { localStorage.setItem('cs_sessions', JSON.stringify(next)) } catch (e) { /* ignore */ }
+        setSessions((prev) => {
+          const next = prev.map((s) => s.id === sessionIdToUse ? { ...s, messages: [...(s.messages || []), newUser] } : s)
+          try { localStorage.setItem('cs_sessions', JSON.stringify(next)) } catch (e) { /* ignore */ }
+          return next
+        })
       }
     } catch (e) {
       setMessages((m) => [
         ...m,
-        { id: crypto.randomUUID(), role: "assistant", text: "Sorry, something went wrong. Please try again." },
+        { id: crypto.randomUUID(), sender: "bot", text: "Sorry, something went wrong. Please try again." },
       ])
     } finally {
       setLoading(false)
@@ -125,35 +166,49 @@ export default function SupportChat() {
       try {
         const token = localStorage.getItem('token')
         if (token) {
-          const payload = token.split('.')[1]
-          if (payload) {
-            const decoded = JSON.parse(atob(payload))
-            userId = decoded?.userId || decoded?.user?.id || decoded?.sub
-          }
+          const id = extractUserId()
+          if (id) userId = id
         }
       } catch (err) {
         // ignore decode errors
+      }
+      // if we don't have a logged-in user id, create a local-only session instead of calling the server
+      if (!userId) {
+        const sessionId = crypto.randomUUID()
+        const newSession = { id: sessionId, title: `Session ${new Date().toLocaleString()}`, server: false, messages: [] as ChatMessage[] }
+        setSessions((prev) => {
+          const next = [newSession, ...prev]
+          try { localStorage.setItem('cs_sessions', JSON.stringify(next)) } catch (e) { /* ignore */ }
+          return next
+        })
+        setActiveSession(sessionId)
+        if (clearMessages) setMessages([])
+        return { id: sessionId, server: false }
       }
 
       const res = await createSession(userId);
       const sessionId = res?.sessionId || crypto.randomUUID()
       const isServer = !!res?.sessionId
       const newSession = { id: sessionId, title: `Session ${new Date().toLocaleString()}`, server: isServer, messages: [] as ChatMessage[] }
-      const next = [newSession, ...sessions]
-      setSessions(next)
+      setSessions((prev) => {
+        const next = [newSession, ...prev]
+        try { localStorage.setItem('cs_sessions', JSON.stringify(next)) } catch (e) { /* ignore */ }
+        return next
+      })
       setActiveSession(sessionId)
       if (clearMessages) setMessages([])
-      try { localStorage.setItem('cs_sessions', JSON.stringify(next)) } catch (e) { /* ignore */ }
       return { id: sessionId, server: isServer }
     } catch (e) {
       // fallback to local-only session
       const sessionId = crypto.randomUUID()
       const newSession = { id: sessionId, title: `Session ${new Date().toLocaleString()}`, server: false, messages: [] as ChatMessage[] }
-      const next = [newSession, ...sessions]
-      setSessions(next)
+      setSessions((prev) => {
+        const next = [newSession, ...prev]
+        try { localStorage.setItem('cs_sessions', JSON.stringify(next)) } catch (e) { /* ignore */ }
+        return next
+      })
       setActiveSession(sessionId)
       if (clearMessages) setMessages([])
-      try { localStorage.setItem('cs_sessions', JSON.stringify(next)) } catch (e) { /* ignore */ }
       return { id: sessionId, server: false }
     }
   }
@@ -165,8 +220,8 @@ export default function SupportChat() {
     if (sess?.server) {
       try {
         const res = await getSession(sessionId)
-        const raw = (res?.messages || []) as Array<any>
-        const loaded: ChatMessage[] = raw.map((m: any) => ({ id: crypto.randomUUID(), role: m.sender === 'user' ? 'user' : 'assistant', text: m.text }))
+  const raw = (res?.messages || []) as Array<any>
+  const loaded: ChatMessage[] = raw.map((m: any) => ({ id: crypto.randomUUID(), sender: m.sender === 'user' ? 'user' : 'bot', text: m.text }))
         setMessages(loaded)
       } catch (e) {
         setMessages([])
@@ -178,13 +233,15 @@ export default function SupportChat() {
 
   const removeSession = async (sessionId: string) => {
     // mark ended locally and remove from list
-    const next = sessions.filter(s => s.id !== sessionId)
-    setSessions(next)
+    setSessions((prev) => {
+      const next = prev.filter(s => s.id !== sessionId)
+      try { localStorage.setItem('cs_sessions', JSON.stringify(next)) } catch (e) { /* ignore */ }
+      return next
+    })
     if (activeSession === sessionId) {
       setActiveSession(null)
       setMessages([])
     }
-    localStorage.setItem('cs_sessions', JSON.stringify(next))
     // optional server call to end
     try { await endSession(sessionId) } catch (e) { /* ignore */ }
   }
@@ -193,9 +250,9 @@ export default function SupportChat() {
     if (s.server) {
       try {
         const res = await getSession(s.id)
-        const raw = (res?.messages || []) as Array<any>
-        const loaded: ChatMessage[] = raw.map((m: any) => ({ id: crypto.randomUUID(), role: m.sender === 'user' ? 'user' : 'assistant', text: m.text }))
-        setSelectedSession({ id: s.id, title: s.title, messages: loaded })
+  const raw = (res?.messages || []) as Array<any>
+  const loaded: ChatMessage[] = raw.map((m: any) => ({ id: crypto.randomUUID(), sender: m.sender === 'user' ? 'user' : 'bot', text: m.text }))
+  setSelectedSession({ id: s.id, title: s.title, messages: loaded })
       } catch (e) {
         setSelectedSession({ id: s.id, title: s.title, messages: [] })
       }
@@ -224,13 +281,22 @@ export default function SupportChat() {
         <aside className="w-48 border-r border-border p-3 hidden md:block">
           <h3 className="text-sm font-medium text-pretty mb-2">Past Conversations</h3>
           <div className="flex flex-col gap-2">
-            {sessions.length === 0 ? (
+            {pastSessions.length === 0 ? (
               <div className="text-xs text-muted-foreground">No past sessions. Create one with + New.</div>
             ) : null}
-            {sessions.map((s) => (
+            {pastSessions.map((s) => (
               <div key={s.id} className={"p-2 rounded hover:bg-accent/10 cursor-pointer " + (s.id === activeSession ? 'bg-accent/20' : '')}>
                 <div className="flex items-center justify-between">
-                    <button className="text-sm text-left w-full" onClick={() => openPreview(s)}>{s.title || s.id}</button>
+                    <button
+                      className="text-sm text-left w-full "
+                      onClick={() => openPreview(s)}
+                      aria-label={s.messages?.[0]?.text ? `Open session: ${s.messages?.[0]?.text}` : 'Open session: Untitled'}
+                    >
+                      {(() => {
+                        const raw = (s.messages?.[0]?.text || 'Untitled').trim();
+                        return raw.length > 10 ? raw.slice(0, 10) + '...' : raw;
+                      })()}
+                    </button>
                   <button className="text-xs text-muted-foreground ml-2" onClick={() => removeSession(s.id)}>Delete</button>
                 </div>
               </div>
@@ -260,7 +326,7 @@ export default function SupportChat() {
         ) : null}
 
         {messages.map((m) => (
-          <MessageBubble key={m.id} role={m.role} text={m.text} />
+          <MessageBubble key={m.id} sender={m.sender} text={m.text} />
         ))}
       </div>
 

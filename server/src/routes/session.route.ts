@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { botFunction } from '../lib/llm.js';
 import { createConversation, appendMessage, getConversation, endConversation } from '../db/session.db.js';
+import { listConversations } from '../db/session.db.js';
 
 const router = Router();
 
@@ -10,6 +11,9 @@ router.post('/new', async (req: Request, res: Response) => {
         console.log('Request body:', req.body);
         const { userId } = req.body;
         if(!userId) return res.status(400).json({ error: 'userId is required' });
+        // validate format to avoid Mongoose CastError
+        const mongoose = (await import('mongoose')).default
+        if(!mongoose.Types.ObjectId.isValid(String(userId))) return res.status(400).json({ error: 'userId must be a valid ObjectId' });
 
         const conv = await createConversation(userId);
         return res.status(201).json({ sessionId: conv._id });
@@ -66,6 +70,21 @@ router.get('/:id', async (req: Request, res: Response) => {
     }catch(err){
         console.error('Error fetching session', err);
         return res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// list conversations for a user (client should pass userId; in production derive from auth)
+router.get('/list/:userId', async (req: Request, res: Response) => {
+    try{
+        const userId = req.params.userId;
+        if(!userId) return res.status(400).json({ error: 'userId is required' });
+        const mongoose = (await import('mongoose')).default
+        if(!mongoose.Types.ObjectId.isValid(String(userId))) return res.status(400).json({ error: 'userId must be a valid ObjectId' });
+        const convs = await listConversations(userId);
+        return res.status(200).json({ conversations: convs });
+    }catch(err){
+        console.error('Error listing sessions', err);
+        return res.status(500).json({ error: 'Unable to list sessions' });
     }
 });
 
