@@ -4,10 +4,9 @@ A small full-stack AI-powered customer support chat application. It includes:
 
 
 
-https://github.com/user-attachments/assets/0f813f7e-604c-4188-83de-b045a4d0aa2e
+https://github.com/user-attachments/assets/0054b7bd-6a1b-4e1f-ad73-f8c533ac7356
 
 
-https://github.com/user-attachments/assets/36cc91b8-10f2-4667-b29e-50010dacdbd8
 
 <img width="1200" height="600" alt="Check for cache (1)" src="https://github.com/user-attachments/assets/6fa539d8-80a0-4720-81a9-f41e8e85bd74" />
 
