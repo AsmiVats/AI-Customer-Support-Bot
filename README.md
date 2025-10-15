@@ -2,6 +2,10 @@
 
 A small full-stack AI-powered customer support chat application. It includes:
 
+
+https://github.com/user-attachments/assets/36cc91b8-10f2-4667-b29e-50010dacdbd8
+
+
 - A React + Vite front-end (TypeScript, Tailwind) with a chat UI, quick questions, session management, and a Past Conversations panel.
 - An Express + TypeScript server that persists conversations in MongoDB and uses an LLM wrapper to generate assistant replies.
 
